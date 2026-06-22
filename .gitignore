@@ -1,0 +1,14 @@
+*
+!.gitignore
+!.nojekyll
+!index.html
+!note-genre-analyzer.html
+!collect-note.mjs
+!note-collected.csv
+!note-collected.json
+!note-history.json
+!note-top-genres.json
+!note-top-genres.md
+!.github/
+!.github/workflows/
+!.github/workflows/publish.yml

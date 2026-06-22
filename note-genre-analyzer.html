@@ -1,0 +1,2276 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>週間note売れ筋候補レポート</title>
+  <style>
+    :root {
+      --bg: #f6f7f2;
+      --ink: #1f2421;
+      --muted: #68716b;
+      --line: #d9ddd5;
+      --panel: #ffffff;
+      --accent: #007a62;
+      --accent-dark: #005f4d;
+      --warn: #b85c38;
+      --soft: #e9f3ee;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Yu Gothic UI", "Hiragino Sans", Meiryo, system-ui, sans-serif;
+      line-height: 1.55;
+    }
+
+    header {
+      padding: 18px clamp(16px, 4vw, 44px) 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .updated-at {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0;
+    }
+
+    header p {
+      max-width: 860px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(520px, 1.15fr) minmax(360px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+      padding: 18px clamp(16px, 4vw, 44px) 36px;
+    }
+
+    main section:first-child {
+      order: 2;
+    }
+
+    main section:nth-child(2) {
+      order: 1;
+    }
+
+    section {
+      min-width: 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .panel.stack {
+      align-content: start;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+    }
+
+    #reportOutput {
+      min-height: 680px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .compose-controls {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) 170px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .compose-controls input,
+    .compose-controls select {
+      min-height: 36px;
+      padding: 8px 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button.secondary {
+      background: #eef1ed;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    button.secondary:hover {
+      background: #e3e8e2;
+    }
+
+    .hint,
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status strong {
+      color: var(--ink);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfa;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 24px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f2f5f1;
+      color: #354039;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #dfe5df;
+      overflow: hidden;
+      min-width: 120px;
+      margin-top: 5px;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      border: 1px solid #cbd9d2;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: var(--soft);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pick-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pick {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfa;
+    }
+
+    .pick h3 {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .pick h3 span {
+      color: var(--accent);
+      font-size: 13px;
+    }
+
+    .pick p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .danger {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .hidden-data {
+      display: none;
+    }
+
+    .note-list {
+      display: grid;
+      gap: 10px;
+      max-height: 620px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .note-card {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .note-card:hover {
+      border-color: #9ec8b9;
+      background: #f8fcfa;
+    }
+
+    .note-card.is-selected {
+      border-color: var(--accent);
+      background: var(--soft);
+    }
+
+    .note-card input {
+      width: 17px;
+      margin-top: 6px;
+    }
+
+    .note-card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .note-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 22px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 7px;
+    }
+
+    .note-author {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .note-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .pill {
+      border: 1px solid #d4ded8;
+      border-radius: 6px;
+      padding: 6px 7px;
+      color: #415047;
+      background: #f8faf7;
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .pill strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .note-signal {
+      margin-top: 8px;
+      color: #385044;
+      font-size: 12px;
+    }
+
+    .note-card a {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .note-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .note-tools button {
+      min-height: 30px;
+      padding: 0 9px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 980px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      main section:first-child,
+      main section:nth-child(2) {
+        order: initial;
+      }
+
+      .topbar {
+        display: block;
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+        margin-top: 12px;
+      }
+
+      .updated-at {
+        text-align: left;
+      }
+    }
+
+    .exclusion-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fafbf9;
+      font-size: 13px;
+    }
+
+    .exclusion-item .exclusion-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .exclusion-item .exclusion-type {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .exclusion-item button {
+      min-height: 24px;
+      padding: 0 8px;
+      font-size: 12px;
+      background: #eef1ed;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .exclusion-item button:hover {
+      background: #e3e8e2;
+    }
+
+    .title-suggest-btn {
+      width: 100%;
+      text-align: left;
+      background: #f8faf7;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ink);
+      cursor: pointer;
+      transition: background 0.15s;
+      line-height: 1.5;
+    }
+
+    .title-suggest-btn:hover {
+      background: var(--soft);
+      border-color: var(--accent);
+    }
+
+    .title-suggest-btn.copied {
+      background: var(--soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .cover-area {
+      display: none;
+      gap: 10px;
+    }
+
+    .cover-area img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    .cover-area a.dl-btn {
+      display: inline-block;
+      min-height: 38px;
+      line-height: 38px;
+      border-radius: 6px;
+      padding: 0 14px;
+      background: #eef1ed;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .cover-area a.dl-btn:hover {
+      background: #e3e8e2;
+    }
+
+    @media (max-width: 620px) {
+      .row,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      header,
+      main {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>週間note売れ筋候補レポート</h1>
+        <p>直近4週間で反応が強い有料note、販売シグナルのあるnote、スキが伸びているnoteをジャンル制限なしで集計します。</p>
+      </div>
+      <div class="top-actions">
+        <button id="refreshButton">最新更新</button>
+        <button id="commitHistoryButton" style="background:#6b7280;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;" title="レポート投稿後に押す。次回集計のスキ増加ベースラインを更新します。">📌 履歴を今週に更新</button>
+        <span class="updated-at" id="cloudSchedule" style="display:none">毎週月曜 7:00 自動更新</span>
+        <span class="updated-at" id="updatedAt">更新日時: 未読み込み</span>
+      </div>
+    </div>
+  </header>
+  <div id="collectProgressBar" style="display:none; background:#eff6ff; border-bottom:1px solid #bfdbfe; padding:8px 24px; font-size:13px; color:#1d4ed8;">
+    <div id="collectProgressText" style="margin-bottom:4px"></div>
+    <div style="background:#dbeafe; border-radius:4px; height:6px; overflow:hidden">
+      <div id="collectProgressFill" style="background:#3b82f6; height:100%; width:0%; transition:width .4s ease"></div>
+    </div>
+  </div>
+
+  <main>
+    <section class="stack">
+      <textarea id="csvInput" class="hidden-data" spellcheck="false"></textarea>
+
+      <div class="panel stack">
+        <h2>週次レポートを生成</h2>
+        <p class="hint">noteにそのまま貼れるMarkdown形式で出力します。</p>
+        <div class="actions">
+          <button id="generateReportButton">レポートを生成</button>
+          <button class="secondary" id="copyReportButton">コピー</button>
+          <button class="secondary" id="clearReportButton">クリア</button>
+        </div>
+        <div id="titleSuggestArea" style="display:none" class="stack">
+          <p class="hint" style="margin:0">📋 タイトル案（クリックでコピー）</p>
+          <div id="titleSuggestList" class="stack"></div>
+        </div>
+        <textarea id="reportOutput" spellcheck="false" placeholder="「レポートを生成」を押すと、noteに貼り付けられる週次レポートが出ます。"></textarea>
+        <div class="status" id="status"></div>
+      </div>
+    </section>
+
+    <section class="stack">
+      <div class="panel stack">
+
+      <div class="panel">
+        <div class="row">
+          <div>
+            <label for="sortMode">並び替え</label>
+            <select id="sortMode">
+              <option value="score">販売見込み</option>
+              <option value="likes">平均スキ</option>
+              <option value="delta">スキ増加</option>
+              <option value="paid">有料率</option>
+              <option value="count">投稿数</option>
+            </select>
+          </div>
+          <div>
+            <label for="minLikes">最低スキ数</label>
+            <input id="minLikes" type="number" min="0" value="20">
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><span>集計済み / 設定</span><strong id="totalPosts">0</strong></div>
+        <div class="metric"><span>有料/販売候補</span><strong id="paidPosts">0</strong></div>
+        <div class="metric"><span>前回からの平均増加</span><strong id="avgLikes">0</strong></div>
+      </div>
+
+      <div class="panel stack">
+        <h2>有料note候補</h2>
+        <div class="note-list" id="postRows"></div>
+      </div>
+
+      <div class="panel stack">
+        <h2>売れ筋ジャンルで絞る</h2>
+        <div class="row">
+          <select id="genreFilter">
+            <option value="">すべての売れ筋候補</option>
+          </select>
+          <button class="secondary" id="clearGenreFilter">絞り込み解除</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ジャンル</th>
+                <th>投稿数</th>
+                <th>平均スキ</th>
+                <th>平均増加</th>
+                <th>有料率</th>
+                <th>販売見込み</th>
+              </tr>
+            </thead>
+            <tbody id="genreRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel stack">
+        <h2>今週の売れ筋候補5ジャンル</h2>
+        <div class="pick-list" id="topPickRows"></div>
+        <p class="hint">公開情報から、スキ増加・スキ数・有料記事・販売/高評価シグナルを合わせて推定しています。</p>
+      </div>
+
+      <div class="panel stack">
+        <h2>頻出キーワード</h2>
+        <div class="tag-list" id="keywordTags"></div>
+      </div>
+
+      <div class="panel stack" id="exclusionPanel">
+        <h2>除外リスト</h2>
+        <div id="exclusionList"><p class="hint">除外した投稿者・記事はここに表示されます。</p></div>
+        <div class="actions" id="exclusionActions" style="display:none">
+          <button class="secondary" id="clearAllExclusions">すべて解除</button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    const genres = [
+      { name: "AI活用・プロンプト", words: ["AI", "生成AI", "ChatGPT", "GPT", "Gemini", "Claude", "プロンプト", "自動化", "業務効率", "AIライター", "AIライティング", "画像生成", "エージェント"] },
+      { name: "投資・資産形成", words: ["投資", "資産", "NISA", "株", "高配当", "インデックス", "不動産", "家計", "節約", "お金", "貯金", "保険", "税金", "FX", "仮想通貨"] },
+      { name: "note販売・運用", words: ["note販売", "有料note", "有料記事", "価格設計", "導線", "スキ", "フォロワー", "収益化", "マガジン", "note運用"] },
+      { name: "副業・稼ぎ方", words: ["副業", "収益", "稼ぐ", "マネタイズ", "コンテンツ販売", "在宅", "フリーランス", "案件", "営業", "コーチング", "コンサル"] },
+      { name: "SNS・発信運用", words: ["SNS", "インスタ", "発信", "フォロワー", "ライティング", "ブログ", "バズ", "インフルエンサー", "コンテンツ", "企画"] },
+      { name: "キャリア・転職", words: ["転職", "キャリア", "面接", "職務経歴書", "就活", "年収", "未経験", "仕事術", "退職", "昇進", "スキルアップ"] },
+      { name: "恋愛・婚活", words: ["恋愛", "婚活", "マッチングアプリ", "結婚", "復縁", "デート", "モテ", "パートナー", "告白", "恋人"] },
+      { name: "学習・資格", words: ["勉強", "資格", "英語", "TOEIC", "受験", "学習", "試験", "暗記", "独学", "合格", "語学"] },
+      { name: "健康・美容", words: ["健康", "美容", "ダイエット", "筋トレ", "食事", "睡眠", "メンタル", "スキンケア", "習慣", "運動", "ヨガ"] },
+    ];
+
+    const stopWords = new Set([
+      "これ", "それ", "ため", "こと", "もの", "よう", "さん", "する", "した", "です", "ます", "ある", "いる", "から", "まで",
+      "そして", "しかし", "note", "the", "and", "with", "for", "this", "that"
+    ]);
+
+    const csvInput = document.querySelector("#csvInput");
+    const status = document.querySelector("#status");
+    const genreRows = document.querySelector("#genreRows");
+    const topPickRows = document.querySelector("#topPickRows");
+    const postRows = document.querySelector("#postRows");
+    const keywordTags = document.querySelector("#keywordTags");
+    const articleOutput = document.querySelector("#articleOutput");
+    const updatedAt = document.querySelector("#updatedAt");
+    const refreshButton = document.querySelector("#refreshButton");
+    const genreFilter = document.querySelector("#genreFilter");
+    const candidateGenreFilter = document.querySelector("#candidateGenreFilter");
+    let latestPosts = [];
+    let latestGenreStats = [];
+    let latestKeywords = [];
+    let articleUpdateTimer = 0;
+    let selectedPostKey = "";
+    let latestMeta = null;
+    let activeGenreFilter = "";
+    const excludedKeys = new Set(JSON.parse(localStorage.getItem("excludedNoteKeys") || "[]"));
+    const excludedAuthors = new Set(JSON.parse(localStorage.getItem("excludedNoteAuthors") || "[]"));
+
+    function parseCsv(text) {
+      const rows = [];
+      let cell = "";
+      let row = [];
+      let quoted = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          cell += '"';
+          i += 1;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(cell.trim());
+          cell = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i += 1;
+          row.push(cell.trim());
+          if (row.some(Boolean)) rows.push(row);
+          row = [];
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      return rows;
+    }
+
+    function normalizeHeader(value) {
+      return String(value || "").toLowerCase().replace(/\s/g, "");
+    }
+
+    function mapRows(rows) {
+      if (!rows.length) return [];
+      const first = rows[0].map(normalizeHeader);
+      const hasHeader = first.some((value) => ["title", "author", "body", "likes", "price", "url", "publishedat", "genre", "likedelta", "soldsignal", "sourcequery", "key", "タイトル", "投稿者", "本文", "スキ", "価格"].includes(value));
+      const header = hasHeader ? first : ["title", "author", "body", "likes", "price", "url", "publishedat", "genre", "likedelta", "soldsignal", "sourcequery", "key"];
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+
+      const indexFor = (names, fallback) => {
+        const index = header.findIndex((value) => names.includes(value));
+        return index >= 0 ? index : fallback;
+      };
+
+      const indexes = {
+        title: indexFor(["title", "タイトル", "件名"], 0),
+        author: indexFor(["author", "投稿者", "user"], 1),
+        body: indexFor(["body", "本文", "content", "内容"], 2),
+        likes: indexFor(["likes", "like", "スキ", "スキ数"], 3),
+        price: indexFor(["price", "価格", "値段"], 4),
+        url: indexFor(["url", "link", "リンク"], 5),
+        publishedAt: indexFor(["publishedat", "publish_at", "公開日"], 6),
+        genre: indexFor(["genre", "ジャンル"], 7),
+        likeDelta: indexFor(["likedelta", "delta", "スキ増加"], 8),
+        soldSignal: indexFor(["soldsignal", "売れ筋シグナル", "販売シグナル"], 9),
+        sourceQuery: indexFor(["sourcequery", "検索語"], 10),
+        key: indexFor(["key", "id"], 11)
+      };
+
+      return dataRows.map((row) => ({
+        title: row[indexes.title] || "無題",
+        author: row[indexes.author] || "",
+        body: row[indexes.body] || "",
+        likes: Number(String(row[indexes.likes] || "0").replace(/[^\d.-]/g, "")) || 0,
+        price: Number(String(row[indexes.price] || "0").replace(/[^\d.-]/g, "")) || 0,
+        url: row[indexes.url] || "",
+        publishedAt: row[indexes.publishedAt] || "",
+        presetGenre: row[indexes.genre] || "",
+        likeDelta: Number(String(row[indexes.likeDelta] || "0").replace(/[^\d.-]/g, "")) || 0,
+        soldSignal: row[indexes.soldSignal] || "",
+        sourceQuery: row[indexes.sourceQuery] || "",
+        key: row[indexes.key] || row[indexes.url] || row[indexes.title] || ""
+      }));
+    }
+
+    function scoreGenre(post) {
+      const text = `${post.title} ${post.body}`.toLowerCase();
+      const ranked = genres.map((genre) => {
+        const hits = genre.words.reduce((sum, word) => {
+          const escaped = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const matches = text.match(new RegExp(escaped, "g"));
+          return sum + (matches ? matches.length : 0);
+        }, 0);
+        return { genre, hits };
+      }).sort((a, b) => b.hits - a.hits);
+
+      return ranked[0].hits > 0 ? ranked[0].genre : { name: "その他", memo: "テーマ語を追加すると分類精度が上がります" };
+    }
+
+    function extractKeywords(posts) {
+      const counts = new Map();
+      const text = posts.map((post) => `${post.title} ${post.body}`).join(" ");
+      const tokens = text.match(/[A-Za-z0-9+#.]{2,}|[\u30a0-\u30ffー]{2,}|[\u4e00-\u9fff]{2,}/g) || [];
+
+      tokens.forEach((token) => {
+        const word = token.trim();
+        if (stopWords.has(word.toLowerCase()) || stopWords.has(word)) return;
+        if (/^\d+$/.test(word)) return;
+        if (/^[\d.+:TZ-]+$/.test(word)) return;
+        if (word.length <= 3 && /\d/.test(word)) return;
+        counts.set(word, (counts.get(word) || 0) + 1);
+      });
+
+      return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 30);
+    }
+
+    function yen(value) {
+      return value ? `${value.toLocaleString("ja-JP")}円` : "無料/不明";
+    }
+
+    function displayAuthor(post) {
+      if (post.author) return post.author;
+      const firstBodyPart = String(post.body || "").split(" / ")[0] || "";
+      return firstBodyPart.includes("T") && firstBodyPart.includes(":") ? "" : firstBodyPart;
+    }
+
+    function persistExclusions() {
+      localStorage.setItem("excludedNoteKeys", JSON.stringify([...excludedKeys]));
+      localStorage.setItem("excludedNoteAuthors", JSON.stringify([...excludedAuthors]));
+    }
+
+    function renderExclusionList() {
+      const list = document.getElementById("exclusionList");
+      const actions = document.getElementById("exclusionActions");
+      if (!list) return;
+
+      const authorItems = [...excludedAuthors].map((author) => `
+        <div class="exclusion-item">
+          <span class="exclusion-type">投稿者</span>
+          <span class="exclusion-label" title="${escapeAttribute(author)}">${escapeHtml(author)}</span>
+          <button data-type="author" data-value="${escapeAttribute(author)}">解除</button>
+        </div>
+      `);
+      const keyItems = [...excludedKeys].map((key) => {
+        const post = latestPosts.find((p) => p.key === key);
+        const label = post ? post.title : key;
+        return `
+          <div class="exclusion-item">
+            <span class="exclusion-type">記事</span>
+            <span class="exclusion-label" title="${escapeAttribute(label)}">${escapeHtml(label)}</span>
+            <button data-type="key" data-value="${escapeAttribute(key)}">解除</button>
+          </div>
+        `;
+      });
+
+      const all = [...authorItems, ...keyItems];
+      if (all.length) {
+        list.innerHTML = `<div class="stack">${all.join("")}</div>`;
+        if (actions) actions.style.display = "flex";
+      } else {
+        list.innerHTML = `<p class="hint">除外した投稿者・記事はここに表示されます。</p>`;
+        if (actions) actions.style.display = "none";
+      }
+
+      list.querySelectorAll("button[data-type]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.type === "author") excludedAuthors.delete(btn.dataset.value);
+          if (btn.dataset.type === "key") excludedKeys.delete(btn.dataset.value);
+          persistExclusions();
+          renderExclusionList();
+          analyze();
+        });
+      });
+    }
+
+    function isExcluded(post) {
+      const author = displayAuthor(post);
+      return excludedKeys.has(post.key) || (author && excludedAuthors.has(author));
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "未読み込み";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function updateTimestamp(meta) {
+      latestMeta = meta || latestMeta;
+      if (!updatedAt) return;
+      const days = latestMeta?.days ? ` / 対象${latestMeta.days}日` : "";
+      updatedAt.textContent = `更新日時: ${formatDateTime(latestMeta?.updatedAt)}${days}`;
+    }
+
+    function updateGenreFilterOptions(genreStats) {
+      const topGenres = genreStats
+        .slice()
+        .sort((a, b) => b.salesScore - a.salesScore)
+        .slice(0, 8)
+        .map((genre) => genre.name);
+      const current = activeGenreFilter;
+      const html = [
+        `<option value="">すべての売れ筋候補</option>`,
+        ...topGenres.map((name) => `<option value="${escapeAttribute(name)}">${escapeHtml(name)}</option>`)
+      ].join("");
+      [genreFilter, candidateGenreFilter].filter(Boolean).forEach((select) => {
+        select.innerHTML = html;
+        select.value = topGenres.includes(current) ? current : "";
+      });
+      if (topGenres.includes(current)) {
+        activeGenreFilter = current;
+      } else {
+        activeGenreFilter = "";
+      }
+    }
+
+    function isSubscription(post) {
+      const text = `${post.title} ${post.body}`.toLowerCase();
+      return /定期購読|マガジン購読|サブスク|メンバーシップ|月額会員|購読者限定/.test(text);
+    }
+
+    function paidSignal(post) {
+      if (isSubscription(post)) return false;
+      const text = `${post.title} ${post.body} ${post.soldSignal || ""}`.toLowerCase();
+      return post.price > 0 || /有料|販売|購入|売れて|高評価|価格|円|テンプレ|講座|ロードマップ|完全版|限定|教材/.test(text);
+    }
+
+    const paywallTemplates = {
+      "note販売・運用": [
+        "有料記事の価格設定チェックリスト（実績ベース）",
+        "無料→有料への導線設計テンプレート",
+        "スキを購入につなげる本文構成の型",
+        "フォロワー0から初売上までの実際の手順書",
+        "タイトルA/Bテストで反応が上がった実例5選",
+      ],
+      "AIライティング": [
+        "記事構成を30秒で作るプロンプトテンプレート（コピペ対応）",
+        "トーン別プロンプト集（親しみやすい・権威的・分析風）",
+        "AI文章を人間らしく直す編集チェックリスト20項目",
+        "用途別プロンプト20選",
+      ],
+      "プロンプト・自動化": [
+        "業務別プロンプトテンプレート集（コピペ対応）",
+        "Zapier/Make連携の自動化フロー設計図",
+        "よくある失敗プロンプトと改善パターン一覧",
+        "ChatGPT / Claude / Gemini 使い分けチートシート",
+      ],
+      "副業・稼ぎ方": [
+        "初案件を取るための営業文テンプレート（実際に使ったもの）",
+        "月収到達までのロードマップ（週次タスク付き）",
+        "価格設定の失敗例と正解パターン比較",
+        "継続案件を生む提案書の型",
+      ],
+      "AI活用": [
+        "業務別・職種別プロンプト実例集",
+        "AI導入チェックリスト（業務ごと）",
+        "よくある「AIに任せてはいけない業務」リスト",
+        "実際に削減できた作業時間の計算シート",
+      ],
+      "キャリア・転職": [
+        "職務経歴書の添削前・後の実例比較",
+        "面接でよく聞かれる質問と回答テンプレート",
+        "年収交渉で使ったスクリプト",
+        "転職活動タイムラインテンプレート（週次）",
+      ],
+      "恋愛・婚活": [
+        "マッチングアプリ初回メッセージ例文集（タイプ別）",
+        "デートの会話ネタ一覧と盛り上がる質問リスト",
+        "プロフィール添削前・後の実例",
+        "LINE移行のタイミングと誘い方テンプレート",
+      ],
+      "学習・資格": [
+        "合格者の学習スケジュール（週次テンプレート）",
+        "教材の選び方チェックリストと比較表",
+        "暗記効率が上がる復習タイミング設計シート",
+        "直前期にやるべきこと・やらないことリスト",
+      ],
+      "健康・美容": [
+        "1週間の献立テンプレート",
+        "毎日続けられるルーティン設計シート",
+        "よくある挫折ポイントと対策チェックリスト",
+        "目標別トレーニングメニュー表",
+      ],
+      "創作・発信": [
+        "バズった投稿のフォーマット分解と型",
+        "ネタ切れしないアイデア出しテンプレート",
+        "SNS別・曜日・時間帯の投稿最適化チェックリスト",
+        "伸びた投稿・伸びなかった投稿の差分分析例",
+      ],
+      "お金・投資": [
+        "家計見直しチェックリスト（月次）",
+        "NISA/iDeCo 設定ステップと銘柄選びの基準",
+        "保険の見直しチェックシート",
+        "緊急資金と投資資金の分け方計算シート",
+      ],
+    };
+
+    function imaginePaywallContent(post) {
+      const genreName = post.genre?.name || "";
+      const items = paywallTemplates[genreName];
+      const words = extractKeywords([post]).slice(0, 4).map(([w]) => w);
+      const base = items?.length ? items : [
+        `${words[0] || genreName}の実践テンプレート（そのまま使える）`,
+        "ステップバイステップの具体的手順書",
+        "よくある失敗例とその解決策まとめ",
+        "チェックリストと自己診断シート",
+        "ケース別の具体例（初心者〜中級者向け）",
+      ];
+      return base.map((item) => `- ${item}`).join("\n");
+    }
+
+    function topReasons(genre) {
+      const band = genre.bestBand?.label || "";
+      const delta = Math.round(genre.avgDelta);
+      const likes = Math.round(genre.avgLikes);
+      const pc = genre.paidCount || 0;
+      const bc = genre.buyCount || 0;
+      const genreName = genre.genre || "";
+      const parts = [];
+
+      // ① 購入シグナル（ジャンル別の言い回しで差別化）
+      if (bc >= 10) parts.push(`今週${bc}件の購入確認—このジャンルは今最も熱い`);
+      else if (bc >= 5) parts.push(`今週${bc}件の購入確認—読者の財布が開いているジャンル`);
+      else if (bc >= 3) parts.push(`今週${bc}件の購入確認—需要が数字で証明されている`);
+      else if (bc >= 1) parts.push(`今週${bc}件の購入確認—小さくても実需がある`);
+
+      // ② ジャンル固有の価格帯コメント（ジャンル名で分岐）
+      const bandCount = genre.bestBand?.count || 0;
+      if (genreName.includes("AI")) {
+        if (band === "500〜999円") parts.push(`ツール系・解説系が500〜999円帯に集中—試し買いされやすい価格戦略が効いている`);
+        else if (band === "1,000〜1,999円") parts.push(`1,000円超の中価格帯が主流—情報の希少性が価格を支えている`);
+        else if (band === "2,000円〜") parts.push(`高単価でも売れるのはAIジャンルならでは—専門性が価格正当化に直結`);
+        else parts.push(`${band}帯が${bandCount}件で最多—AIの実用性が価格を後押し`);
+      } else if (genreName.includes("恋愛") || genreName.includes("婚活")) {
+        if (band === "500〜999円") parts.push(`500〜999円が主戦場—悩みに直結するジャンルは低価格で即決されやすい`);
+        else if (band === "〜299円") parts.push(`低価格帯が主流—まず読んでもらう戦略が恋愛ジャンルでは有効`);
+        else parts.push(`${band}帯が${bandCount}件—感情に訴えるジャンルは価格より内容で選ばれる`);
+      } else if (genreName.includes("副業") || genreName.includes("稼ぎ")) {
+        if (band === "500〜999円") parts.push(`500〜999円の低リスク価格—「元が取れるか」を意識した価格設定が効く`);
+        else if (band === "1,000〜1,999円") parts.push(`1,000円前後—実績・再現性を訴求できれば高めでも売れる価格帯`);
+        else parts.push(`${band}帯が${bandCount}件—副業ジャンルは具体的な成果提示が価格を正当化する`);
+      } else if (genreName.includes("キャリア") || genreName.includes("転職")) {
+        if (band === "500〜999円") parts.push(`500〜999円帯—転職は一生に数回の判断。その決断に500円は安すぎると感じさせる訴求が有効`);
+        else if (band === "1,000〜1,999円") parts.push(`1,000円前後—実務経験者の視点が価値を出しやすいジャンル`);
+        else parts.push(`${band}帯が主流—専門性と具体性が価格を正当化する`);
+      } else if (genreName.includes("note") || genreName.includes("SNS")) {
+        if (band === "500〜999円") parts.push(`500〜999円帯が主戦場—「自分にも再現できる」感が購入を後押しする`);
+        else parts.push(`${band}帯が${bandCount}件—発信系ジャンルは読者自身の成長欲求が購買につながる`);
+      } else if (genreName.includes("投資") || genreName.includes("資産")) {
+        if (band === "500〜999円") parts.push(`500〜999円帯—投資額に比べれば情報コストは安いと感じさせやすい価格帯`);
+        else if (band === "1,000〜1,999円") parts.push(`1,000円前後—リターン期待値を示せれば高単価でも購入される`);
+        else parts.push(`${band}帯が${bandCount}件—お金系は具体的な数字が価格の壁を下げる`);
+      } else if (genreName.includes("健康") || genreName.includes("美容")) {
+        if (band === "500〜999円") parts.push(`500〜999円帯—美容・健康は継続前提のジャンル、低価格で試しやすくする戦略が有効`);
+        else parts.push(`${band}帯が${bandCount}件—体の悩みは切実なほど購入ハードルが下がる`);
+      } else if (genreName.includes("学習") || genreName.includes("資格")) {
+        if (band === "500〜999円") parts.push(`500〜999円帯—合格実績を示せれば低価格でも高評価を得やすい`);
+        else if (band === "1,000〜1,999円") parts.push(`1,000円前後—資格取得という明確なゴールが高単価を正当化`);
+        else parts.push(`${band}帯が${bandCount}件—学習系は内容の濃さと価格のバランスが評価される`);
+      } else {
+        if (band === "500〜999円") parts.push(`500〜999円帯が${bandCount}件で最多—このジャンルの読者が払いやすいスイートスポット`);
+        else if (band === "〜299円") parts.push(`低価格帯が主流—間口を広げて読者を獲得する戦略が機能している`);
+        else if (band === "2,000円〜") parts.push(`高単価帯でも${bandCount}件—専門性と希少性が価格を正当化している`);
+        else parts.push(`${band}帯が${bandCount}件で最多`);
+      }
+
+      // ③ スキ増加（数字と文脈を組み合わせ）
+      if (delta >= 50) parts.push(`週平均+${delta}スキと急増—今まさに拡散中のジャンル、乗り遅れ注意`);
+      else if (delta >= 20) parts.push(`週平均+${delta}スキと好調—新規読者の流入が続いており上昇トレンド中`);
+      else if (delta >= 10) parts.push(`週平均+${delta}スキと着実に伸長—固定ファン＋新規流入のバランスが取れている`);
+      else if (delta >= 5) parts.push(`週平均+${delta}スキ—急拡散ではないが購入意欲の高い読者が集まりやすい`);
+      else if (delta >= 1) parts.push(`週平均+${delta}スキ—スキより購入が先行するタイプのジャンル`);
+
+      // ④ 市場規模（ジャンル固有の競合感で表現）
+      if (pc >= 100) parts.push(`有料記事${pc}件と飽和気味—タイトルと独自性で差別化しないと埋もれる`);
+      else if (pc >= 60) parts.push(`有料記事${pc}件と競合が多め—「誰向けか」を絞るほど刺さる`);
+      else if (pc >= 30) parts.push(`有料記事${pc}件と中規模市場—質の高い記事なら上位に入りやすい`);
+      else if (pc >= 15) parts.push(`有料記事${pc}件とまだ少なめ—今参入すれば検索で上位を取りやすい`);
+      else if (pc >= 1) parts.push(`有料記事${pc}件と希少—競合が少ない今が参入タイミング`);
+
+      return parts.slice(0, 3).join(" / ") || "データ蓄積中・来週以降の動向に注目";
+    }
+
+    function analyzeNotePoints(note) {
+      const title = note.title || "";
+      const body = note.body || "";
+      const price = note.price || 0;
+      const points = [];
+
+      // ① タイトルの構造分析
+      if (/【[^】]{2,20}】/.test(title)) points.push("【】タグで読者の目を引き、内容を一瞬で伝える構成");
+      if (/完全|保存版|永久保存|総まとめ/.test(title)) points.push("「完全版・保存版」でこれ1本で済む安心感を演出");
+      if (/実践|体験|やってみた|使ってみた|やった/.test(title)) points.push("実体験ベースのタイトルでリアルな話という信頼感を獲得");
+      if (/ロードマップ|手順|ステップ|流れ/.test(title)) points.push("ロードマップ形式で迷わず実践できるを約束している");
+      if (/初心者|入門|ゼロから|未経験/.test(title)) points.push("初心者明示で自分でもできるかもというハードルを下げている");
+      if (/月[\d,]+万|週[\d,]+万|年[\d,]+万/.test(title)) points.push("具体的な金額提示でなれる未来をリアルにイメージさせる");
+      if (/(\d+)選|(\d+)つ|(\d+)個|(\d+)つの/.test(title)) points.push("数字リスト形式で何が手に入るかを購入前から明確にしている");
+      if (/攻略|最強|最速|最短|圧倒/.test(title)) points.push("攻略・最強系ワードで他の記事との差別化を図っている");
+      if (/限定|部数限定|先着/.test(title)) points.push("希少性・限定感で今買わないと損という心理を刺激");
+      if (/秘密|裏側|非公開|教えない/.test(title)) points.push("非公開情報訴求でここでしか読めない感を演出");
+
+      // ② 価格設計の意図
+      if (price > 0 && price <= 200) points.push(`${price}円の超低価格—まず読んでもらう間口の広さで勝負している`);
+      else if (price <= 500) points.push(`${price}円の低価格設定—購入ハードルを下げて読者層を広く取り込む戦略`);
+      else if (price <= 999) points.push(`${price}円で専門性を価格に反映—内容への自信がにじむ価格設定`);
+      else if (price <= 2999) points.push(`${price}円の中〜高価格—具体的な成果や解決策を提示できている証拠`);
+      else points.push(`${price.toLocaleString("ja-JP")}円の高単価—ターゲットを絞り「この人のために書いた」感が機能している`);
+
+      // ③ 内容の深さ・構成（descriptionから推測、中身は確認不可）
+      if (body.length < 30) {
+        // プレビューがほぼない = 詳細は確認できず
+        if (points.length < 2) points.push("有料ラインが序盤に設定され、内容は購入後に展開する構成");
+      } else {
+        if (/\d+[pページ]|\d+文字/.test(body)) points.push("ページ数・文字数を明示してボリューム感で購買を後押し");
+        if (/テンプレ|フォーマット|シート|ツール/.test(body + title)) points.push("テンプレ・ツール付きで「読むだけ→すぐ使える」実用性を訴求");
+        if (/図解|イラスト|画像|漫画/.test(body + title)) points.push("図解・ビジュアル訴求で「わかりやすさ」を差別化ポイントにしている");
+        if (body.length > 150) points.push("詳細なプレビュー文で「読む価値がある」を購入前に証明している");
+      }
+
+      if (points.length === 0) points.push("有料ラインが序盤に設定され、内容は購入後に展開する構成");
+
+      return points.slice(0, 3);
+    }
+
+    function estimateSales(genre) {
+      // buyCount = 24h購入シグナルが立ったノート数
+      // シグナル1件 = 少なくとも1日1件売れている → 週7件ペースの最低ライン
+      // avgDeltaが高いほど新規流入が多いため掛け率を加算
+      const base = genre.buyCount || 0;
+      if (base === 0) {
+        // シグナルなしでも avgDelta × paidCount から傾向を推測（ジャンルごとに差をつける）
+        const d = Math.round(genre.avgDelta);
+        const pc = genre.paidCount || 0;
+        if (genre.avgDelta >= 50 && pc >= 20) return `週スキ+${d}・有料${pc}件—月30件超ペースの可能性`;
+        if (genre.avgDelta >= 50) return `週スキ+${d}急増中—月10〜30件ペースの可能性`;
+        if (genre.avgDelta >= 30 && pc >= 20) return `週スキ+${d}・有料${pc}件—月10〜20件ペースの可能性`;
+        if (genre.avgDelta >= 30) return `週スキ+${d}増加—月5〜15件ペースの可能性`;
+        if (genre.avgDelta >= 15) return `週スキ+${d}と増加傾向—月3〜8件ペースの可能性`;
+        return "データ蓄積中（昼間の収集で精度UP）";
+      }
+      const deltaBoost = genre.avgDelta >= 30 ? 2 : genre.avgDelta >= 15 ? 1.5 : 1;
+      const weeklyLow = Math.round(base * 5 * deltaBoost);
+      const weeklyHigh = Math.round(base * 10 * deltaBoost);
+      const monthlyLow = weeklyLow * 4;
+      const monthlyHigh = weeklyHigh * 4;
+      const price = genre.bestBand?.min || 0;
+      const revenueRange = price > 0
+        ? ` ／ 月間収益予想 ${(monthlyLow * price).toLocaleString("ja-JP")}〜${(monthlyHigh * price).toLocaleString("ja-JP")}円`
+        : "";
+      return `週${weeklyLow}〜${weeklyHigh}件・月${monthlyLow}〜${monthlyHigh}件ペース${revenueRange}`;
+    }
+
+    function activeKeyword() {
+      const input = document.querySelector("#noteKeyword");
+      return input ? input.value.trim() : "";
+    }
+
+    function filterPostsByKeyword(posts, keyword) {
+      if (!keyword) return posts;
+      const terms = keyword.toLowerCase().split(/\s+/).filter(Boolean);
+      if (!terms.length) return posts;
+      const filtered = posts.filter((post) => {
+        const text = `${post.title} ${post.body}`.toLowerCase();
+        return terms.some((term) => text.includes(term));
+      });
+      return filtered.length ? filtered : posts;
+    }
+
+    function analyze(options = {}) {
+      const allPosts = mapRows(parseCsv(csvInput.value));
+      const keyword = options.ignoreKeyword ? "" : activeKeyword();
+      const posts = filterPostsByKeyword(allPosts, keyword);
+      const minLikes = Number(document.querySelector("#minLikes").value) || 0;
+      const sortMode = document.querySelector("#sortMode").value;
+
+      posts.forEach((post) => {
+        post.genre = post.presetGenre ? { name: post.presetGenre, memo: "週次収集データの分類を使用" } : scoreGenre(post);
+      });
+
+      const groups = new Map();
+      posts.forEach((post) => {
+        const key = post.genre.name;
+        if (!groups.has(key)) {
+          groups.set(key, { name: key, posts: [], memo: post.genre.memo });
+        }
+        groups.get(key).posts.push(post);
+      });
+
+      const genreStats = [...groups.values()].map((group) => {
+        const count = group.posts.length;
+        const avgLikes = group.posts.reduce((sum, post) => sum + post.likes, 0) / count;
+        const avgDelta = group.posts.reduce((sum, post) => sum + post.likeDelta, 0) / count;
+        const paidRate = group.posts.filter((post) => post.price > 0).length / count;
+        const paidSignalRate = group.posts.filter(paidSignal).length / count;
+        const strongRate = group.posts.filter((post) => post.likes >= minLikes).length / count;
+        const salesScore = Math.round((avgDelta * 2.2) + (avgLikes * 1.1) + (paidRate * 55) + (paidSignalRate * 80) + Math.min(count, 20) * 3);
+        const score = salesScore;
+        return { ...group, count, avgLikes, avgDelta, paidRate, paidSignalRate, strongRate, salesScore, score };
+      });
+
+      const sorters = {
+        score: (a, b) => b.score - a.score,
+        likes: (a, b) => b.avgLikes - a.avgLikes,
+        delta: (a, b) => b.avgDelta - a.avgDelta,
+        paid: (a, b) => b.paidRate - a.paidRate,
+        count: (a, b) => b.count - a.count
+      };
+      genreStats.sort(sorters[sortMode]);
+      latestPosts = posts;
+      latestGenreStats = genreStats;
+      latestKeywords = extractKeywords(posts);
+      updateGenreFilterOptions(genreStats);
+
+      const maxScore = Math.max(1, ...genreStats.map((genre) => genre.score));
+      const topPicks = genreStats
+        .slice()
+        .sort((a, b) => b.salesScore - a.salesScore)
+        .slice(0, 5);
+      topPickRows.innerHTML = topPicks.map((genre, index) => `
+        <article class="pick">
+          <h3>${index + 1}. ${escapeHtml(genre.name)} <span>推定${genre.salesScore}</span></h3>
+          <div class="bar"><i style="width:${Math.min(100, Math.round((genre.salesScore / Math.max(1, topPicks[0].salesScore)) * 100))}%"></i></div>
+          <p>投稿${genre.count}件 / 平均スキ${genre.avgLikes.toFixed(1)} / 平均増加+${genre.avgDelta.toFixed(1)} / 有料率${Math.round(genre.paidRate * 100)}% / 販売シグナル${Math.round(genre.paidSignalRate * 100)}%</p>
+          <p>${escapeHtml(topReasons(genre))}</p>
+        </article>
+      `).join("") || `<span class="hint">投稿データを読み込むと候補が出ます。</span>`;
+      genreRows.innerHTML = genreStats.map((genre) => `
+        <tr>
+          <td><strong>${escapeHtml(genre.name)}</strong></td>
+          <td>${genre.count}</td>
+          <td>${genre.avgLikes.toFixed(1)}</td>
+          <td>+${genre.avgDelta.toFixed(1)}</td>
+          <td>${Math.round(genre.paidRate * 100)}%</td>
+          <td>
+            <strong>${genre.score}</strong>
+            <div class="bar"><i style="width:${Math.round((genre.score / maxScore) * 100)}%"></i></div>
+          </td>
+        </tr>
+      `).join("") || `<tr><td colspan="6">投稿データを入れて集計してください。</td></tr>`;
+
+      const displaySourcePosts = activeGenreFilter
+        ? posts.filter((post) => post.genre.name === activeGenreFilter)
+        : posts;
+      const authorSeen = new Set();
+      const paidPostsForList = displaySourcePosts.filter((post) => paidSignal(post) && !isExcluded(post)).filter((post) => {
+        const author = displayAuthor(post);
+        if (!author) return true;
+        if (authorSeen.has(author)) return false;
+        authorSeen.add(author);
+        return true;
+      });
+      const postSorter = {
+        score: (a, b) => ((b.likeDelta * 2) + b.likes + (paidSignal(b) ? 80 : 0)) - ((a.likeDelta * 2) + a.likes + (paidSignal(a) ? 80 : 0)),
+        delta: (a, b) => b.likeDelta - a.likeDelta,
+        likes: (a, b) => b.likes - a.likes,
+        paid:  (a, b) => b.price - a.price,
+        count: (a, b) => b.likes - a.likes,
+      }[sortMode] || ((a, b) => ((b.likeDelta * 2) + b.likes) - ((a.likeDelta * 2) + a.likes));
+      postRows.innerHTML = paidPostsForList
+        .slice()
+        .sort(postSorter)
+        .slice(0, 60)
+        .map((post, index) => `
+          <div class="note-card">
+            <div style="display:flex;align-items:center;justify-content:center;padding-top:2px">
+              <span class="note-rank">${index + 1}</span>
+            </div>
+            <div>
+              ${post.url
+                ? `<h3><a href="${escapeAttribute(post.url)}" target="_blank" rel="noreferrer" style="color:inherit;text-decoration:none">${escapeHtml(post.title)}</a></h3>`
+                : `<h3>${escapeHtml(post.title)}</h3>`}
+              ${displayAuthor(post) ? `<div class="note-author">投稿者: ${escapeHtml(displayAuthor(post))}</div>` : ""}
+              <div class="note-meta">
+                <span class="pill">${escapeHtml(post.genre.name)}</span>
+                <span class="pill">${post.likes.toLocaleString("ja-JP")}スキ</span>
+                <span class="pill">+${post.likeDelta.toLocaleString("ja-JP")}</span>
+                <span class="pill">${yen(post.price)}</span>
+              </div>
+              <div class="note-tools" style="margin-top:6px">
+                <button type="button" class="secondary exclude-note" data-key="${escapeAttribute(post.key)}" style="font-size:12px;min-height:28px;padding:0 8px">除外</button>
+                ${displayAuthor(post) ? `<button type="button" class="secondary exclude-author" data-author="${escapeAttribute(displayAuthor(post))}" style="font-size:12px;min-height:28px;padding:0 8px">投稿者を除外</button>` : ""}
+              </div>
+            </div>
+          </div>
+        `).join("") || `<p class="hint">有料/販売シグナルありの投稿がまだありません。</p>`;
+
+      keywordTags.innerHTML = latestKeywords.map(([word, count]) => (
+        `<span class="tag">${escapeHtml(word)} ${count}</span>`
+      )).join("") || `<span class="hint">キーワードはここに出ます。</span>`;
+
+      const totalLikes = posts.reduce((sum, post) => sum + post.likes, 0);
+      const totalDelta = posts.reduce((sum, post) => sum + post.likeDelta, 0);
+      const configuredSize = configuredCollectionSize();
+      const showSettingGap = !keyword && !activeGenreFilter && posts.length && posts.length !== configuredSize;
+      document.querySelector("#totalPosts").textContent = showSettingGap ? `${posts.length} / ${configuredSize}` : `${posts.length}`;
+      document.querySelector("#paidPosts").textContent = `${posts.filter(paidSignal).length}件`;
+      document.querySelector("#avgLikes").textContent = posts.length ? `+${(totalDelta / posts.length).toFixed(1)}` : "0";
+      const keywordNote = keyword && posts.length !== allPosts.length
+        ? ` キーワード「${escapeHtml(keyword)}」で${posts.length}件に絞り込みました。`
+        : "";
+      const genreNote = activeGenreFilter ? ` 表示中: ${escapeHtml(activeGenreFilter)}。` : "";
+      if (!selectedPostKey && paidPostsForList.length) {
+        selectedPostKey = paidPostsForList
+          .slice()
+          .sort((a, b) => ((b.likeDelta * 2) + b.likes + (paidSignal(b) ? 80 : 0)) - ((a.likeDelta * 2) + a.likes + (paidSignal(a) ? 80 : 0)))[0].key;
+      }
+      const settingGapNote = showSettingGap ? ` 現在は前回の${posts.length}件データを表示中です。右上の最新更新で${configuredSize}件ベースに更新できます。` : "";
+      status.innerHTML = posts.length
+        ? `<strong>${posts.length}件</strong>を集計しました。${settingGapNote}${keywordNote}${genreNote}増加数は前回保存データとの差分です。初回更新直後は現在スキ数に近く出ます。`
+        : `<span class="danger">投稿データがありません。</span>`;
+    }
+
+    function refreshArticleIfVisible() {
+      if (articleOutput.value.trim()) {
+        generateArticleDraft();
+      }
+    }
+
+    function scheduleKeywordRefresh() {
+      window.clearTimeout(articleUpdateTimer);
+      articleUpdateTimer = window.setTimeout(() => {
+        analyze();
+        if (latestPosts.length) {
+          generateArticleDraft();
+        }
+      }, 350);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    function csvCell(value) {
+      const text = String(value || "");
+      return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function mapNoteApiItems(contents) {
+      return (contents || []).map((item) => {
+        const urlname = item.user && item.user.urlname;
+        const url = urlname && item.key ? `https://note.com/${urlname}/n/${item.key}` : "";
+        return {
+          title: item.name || "無題",
+          body: String(item.description || item.body || item.highlight || item.category?.name || "")
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim(),
+          likes: Number(item.like_count || 0),
+          price: Number(item.price || item.price_info?.price || 0),
+          url,
+          author: item.user?.nickname || "",
+          publishedAt: item.publish_at || ""
+        };
+      });
+    }
+
+    async function fetchNoteItems(keyword, sort, size) {
+      const localParams = new URLSearchParams({ q: keyword, sort, size: String(size) });
+
+      try {
+        const localResponse = await fetch(`/api/note-search?${localParams.toString()}`);
+        if (localResponse.ok) {
+          const localResult = await localResponse.json();
+          return localResult.items || [];
+        }
+      } catch {
+        // Fall back to note's public search API from the browser.
+      }
+
+      const noteParams = new URLSearchParams({
+        context: "note",
+        q: keyword,
+        sort,
+        size: String(size),
+        start: "0"
+      });
+      const noteResponse = await fetch(`https://note.com/api/v3/searches?${noteParams.toString()}`, {
+        headers: { accept: "application/json" }
+      });
+
+      if (!noteResponse.ok) {
+        throw new Error(`noteの取得に失敗しました (${noteResponse.status})`);
+      }
+
+      const noteResult = await noteResponse.json();
+      return mapNoteApiItems(noteResult?.data?.notes?.contents);
+    }
+
+    async function collectFromNote() {
+      const keyword = document.querySelector("#noteKeyword").value.trim();
+      const sort = document.querySelector("#noteSort").value;
+      const size = Math.max(1, Math.min(400, Number(document.querySelector("#noteSize").value) || 400));
+      const mode = document.querySelector("#collectMode").value;
+
+      if (!keyword) {
+        status.innerHTML = `<span class="danger">検索キーワードを入れてください。</span>`;
+        return;
+      }
+
+      const button = document.querySelector("#collectButton");
+      button.disabled = true;
+      button.textContent = "収集中...";
+      status.innerHTML = `<strong>${escapeHtml(keyword)}</strong> をnoteから収集中です。`;
+
+      try {
+        const items = await fetchNoteItems(keyword, sort, size);
+
+        if (!items.length) {
+          status.innerHTML = `<span class="danger">該当する投稿が見つかりませんでした。</span>`;
+          return;
+        }
+
+        const header = "title,body,likes,price,url";
+        const lines = items.map((item) => [
+          item.title,
+          [item.author, item.publishedAt, item.body].filter(Boolean).join(" / "),
+          item.likes,
+          item.price,
+          item.url
+        ].map(csvCell).join(","));
+
+        if (mode === "append" && csvInput.value.trim()) {
+          const current = csvInput.value.trim();
+          const nextLines = current.toLowerCase().startsWith("title,body,likes,price,url")
+            ? lines
+            : [header, ...lines];
+          csvInput.value = `${current}\n${nextLines.join("\n")}`;
+        } else {
+          csvInput.value = [header, ...lines].join("\n");
+        }
+
+        analyze();
+        generateArticleDraft();
+        status.innerHTML = `<strong>${items.length}件</strong>をnoteから収集しました。検索語: ${escapeHtml(keyword)}`;
+      } catch (error) {
+        analyze();
+        refreshArticleIfVisible();
+        status.innerHTML = `<span class="danger">ブラウザから直接取得できませんでした。今ある収集済みデータをキーワードで絞り込みました。新しい検索語で外部収集する場合は収集ヘルパーを使います。</span>`;
+      } finally {
+        button.disabled = false;
+        button.textContent = "noteから収集";
+      }
+    }
+
+    async function loadCollectedCsv() {
+      try {
+        const stamp = Date.now();
+        const [csvResponse, jsonResponse] = await Promise.all([
+          fetch(`note-collected.csv?ts=${stamp}`),
+          fetch(`note-collected.json?ts=${stamp}`)
+        ]);
+        if (!csvResponse.ok) throw new Error("収集済みCSVがまだありません。");
+        csvInput.value = await csvResponse.text();
+        if (jsonResponse.ok) {
+          updateTimestamp(await jsonResponse.json());
+        }
+        analyze();
+        generateArticleDraft();
+        status.innerHTML = `<strong>最新レポート</strong>を読み込みました。`;
+      } catch (error) {
+        status.innerHTML = `<span class="danger">${escapeHtml(error.message)}</span>`;
+      }
+    }
+
+    let progressTimer = null;
+
+    async function pollProgress() {
+      try {
+        const res = await fetch("/collect-progress.json?_=" + Date.now());
+        if (!res.ok) { document.querySelector("#collectProgressBar").style.display = "none"; return; }
+        const d = await res.json();
+        const bar = document.querySelector("#collectProgressBar");
+        const text = document.querySelector("#collectProgressText");
+        const fill = document.querySelector("#collectProgressFill");
+        if (!bar) return;
+        if (d.running) {
+          const pct = d.total > 0 ? Math.round((d.current / d.total) * 100) : 0;
+          bar.style.display = "block";
+          if (text) text.textContent = `収集中… ${d.current}/${d.total} クエリ ／ 取得済み ${d.collected}件${d.currentQuery ? ` ／「${d.currentQuery}」` : ""}`;
+          if (fill) fill.style.width = `${pct}%`;
+        } else {
+          bar.style.display = "none";
+        }
+      } catch { /* ignore */ }
+    }
+
+    async function refreshLatestData() {
+      if (!refreshButton) return;
+      refreshButton.disabled = true;
+      refreshButton.textContent = "更新中...";
+      status.innerHTML = "収集を開始しています...";
+
+      progressTimer = setInterval(pollProgress, 2000);
+
+      try {
+        const response = await fetch("/api/refresh", { method: "POST" });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "更新に失敗しました。");
+        await loadCollectedCsv();
+        status.innerHTML = `<strong>最新更新完了</strong> ${result.count || ""}件を更新しました。`;
+      } catch (error) {
+        await loadCollectedCsv();
+        status.innerHTML = `<span class="danger">この表示環境ではボタン更新を完了できませんでした。自動更新データを読み込みました。</span>`;
+      } finally {
+        clearInterval(progressTimer);
+        progressTimer = null;
+        refreshButton.disabled = false;
+        refreshButton.textContent = "最新更新";
+      }
+    }
+
+    function toneLead(tone) {
+      const leads = {
+        practical: "結論から言うと、いま狙いやすいのは「悩みが具体的で、買った直後に使える型がある記事」です。",
+        friendly: "noteで売れるテーマを探すとき、いちばん大事なのは「読者がすでに困っていること」を見つけることです。",
+        sharp: "今回の収集結果を見ると、反応が高い投稿には、実績・具体例・手順化という共通点があります。"
+      };
+      return leads[tone] || leads.practical;
+    }
+
+    function configuredCollectionSize() {
+      return Math.max(1, Math.min(400, Number(document.querySelector("#noteSize")?.value) || 400));
+    }
+
+    function collectionScopeText() {
+      const configured = configuredCollectionSize();
+      const loaded = latestPosts.length;
+      if (loaded && loaded !== configured) {
+        return `設定${configured}件・現在読み込み済み${loaded}件`;
+      }
+      return `${loaded || configured}件`;
+    }
+
+    function generateArticleDraft() {
+      analyze();
+      const keyword = activeKeyword();
+      const themeInput = document.querySelector("#articleTheme").value.trim();
+      const tone = document.querySelector("#articleTone").value;
+      const topGenre = latestGenreStats[0];
+      const topPosts = latestPosts.slice().sort((a, b) => b.likes - a.likes).slice(0, 6);
+      const keywords = latestKeywords.slice(0, 12).map(([word]) => word);
+      const theme = themeInput || (keyword ? `${keyword}で売れるnoteテーマ分析` : (topGenre ? `${topGenre.name}で売れるnoteテーマ分析` : "売れるnoteテーマ分析"));
+
+      if (!latestPosts.length) {
+        articleOutput.value = "先に投稿データを集計してください。noteから収集したCSVを読み込むと、記事案を作れます。";
+        return;
+      }
+
+      const paidPosts = latestPosts.filter((post) => post.price > 0).length;
+      const avgLikes = latestPosts.reduce((sum, post) => sum + post.likes, 0) / latestPosts.length;
+      const scopeText = collectionScopeText();
+      const genreLines = latestGenreStats.slice(0, 5).map((genre, index) => (
+        `${index + 1}. ${genre.name}: 投稿${genre.count}件 / 平均スキ${genre.avgLikes.toFixed(1)} / 有料率${Math.round(genre.paidRate * 100)}% / 見込み${genre.score}`
+      )).join("\n");
+      const referenceLines = topPosts.map((post, index) => (
+        `${index + 1}. ${post.title}（${post.likes}スキ / ${post.price ? `${post.price.toLocaleString("ja-JP")}円` : "無料・価格不明"}）${post.url ? `\n   ${post.url}` : ""}`
+      )).join("\n");
+
+      const strongest = topGenre ? topGenre.name : "反応が強いテーマ";
+      const draft = `# ${theme}
+
+## タイトル案
+1. ${strongest}で売れるnoteを作るための実データ分析
+2. 反応が高いnote投稿から見えた、次に狙うべきテーマ
+3. ${keywords.slice(0, 3).join("・") || strongest}から考える有料noteの作り方
+
+## この記事で伝える結論
+${toneLead(tone)}
+
+今回の集計では、${keyword ? `「${keyword}」に関係する` : ""}${scopeText}の公開投稿をもとに、スキ数・有料率・ジャンルごとの反応を見ました。有料投稿は${paidPosts}件、平均スキは${avgLikes.toFixed(1)}です。
+
+## 反応が強いジャンル
+${genreLines}
+
+特に注目したいのは「${strongest}」です。単なる感想ではなく、読者がすぐ試せる手順、テンプレ、チェックリストに変換すると、有料記事としての価値を作りやすくなります。
+
+## 読者が欲しがりそうな切り口
+- 何から始めればいいかを迷わないロードマップ
+- 失敗例と改善例を並べたチェックリスト
+- そのまま使えるテンプレート、例文、プロンプト
+- 初心者がつまずきやすいポイントの先回り解説
+- 無料記事では概要、有料部分では実践素材を渡す構成
+
+## 本文下書き
+noteで記事を売るとき、最初に考えるべきことは「自分が書きたいこと」だけではありません。読者が検索してまで知りたいこと、そしてお金を払ってでも時間を短縮したいことを探す必要があります。
+
+今回の集計では、反応が高い投稿ほどタイトルの時点で得られるものが明確でした。たとえば、実績、手順、テンプレ、具体例が含まれている投稿は、読む前から価値が伝わりやすくなります。
+
+もしこのテーマで有料noteを作るなら、構成は次の形が扱いやすいです。
+
+1. 無料部分で問題提起と全体像を見せる
+2. 有料部分で具体的な手順を出す
+3. テンプレートやチェックリストを付ける
+4. 最後に実践例と改善ポイントを載せる
+
+この流れにすると、読者は「買ったあとに何が手に入るか」を想像しやすくなります。特に${keywords.slice(0, 5).join("、") || "頻出キーワード"}のような言葉が多く出ている場合、その周辺に読者の悩みや関心が集まっている可能性があります。
+
+## 参考にした反応の強い投稿
+${referenceLines}
+
+## 次に作るなら
+まずは「${strongest}」を軸に、初心者向けの実践テンプレ記事を1本作るのがよさそうです。無料部分では考え方を見せ、有料部分では具体例と素材を渡す構成にすると、読者にとって買う理由がはっきりします。
+`;
+
+      articleOutput.value = draft;
+      status.innerHTML = `<strong>記事案</strong>を生成しました。`;
+    }
+
+    function selectedPost() {
+      return latestPosts.find((post) => post.key === selectedPostKey) || latestPosts.find(paidSignal) || latestPosts[0];
+    }
+
+    function generateSelectedPostDraft() {
+      analyze();
+      const post = selectedPost();
+      if (!post) {
+        articleOutput.value = "先に真似たいnoteを1つ選んでください。";
+        return;
+      }
+
+      const words = extractKeywords([post]).slice(0, 8).map(([word]) => word);
+      const paidLine = paidSignal(post)
+        ? "このnoteは有料/販売系のシグナルがあるため、無料部分で価値を見せて、有料部分で具体例・テンプレ・手順を渡す構成が向いています。"
+        : "このnoteは反応の強さを参考にしつつ、有料化するなら実践素材を追加して差別化するのがよさそうです。";
+      const styleLine = "noteらしい読みやすさに寄せて、短い段落、余白多め、見出しで区切る構成にします。文字フォントそのものはnote標準に合わせる前提で、本文はMarkdownで整えます。";
+
+      articleOutput.value = `# 参考noteから作る別記事案
+
+## 参考にしたnote
+${post.title}
+${post.url || ""}
+
+- ジャンル: ${post.genre.name}
+- 投稿者: ${displayAuthor(post) || "不明"}
+- スキ: ${post.likes}
+- 週間増加: +${post.likeDelta}
+- 価格: ${yen(post.price)}
+- 売れ筋シグナル: ${post.soldSignal || (paidSignal(post) ? "有料/販売系" : "なし")}
+
+## 真似るポイント
+- タイトルで得られる価値がわかる
+- ${words.slice(0, 3).join(" / ") || "読者の関心語"}を前面に出す
+- 体験談だけで終わらせず、手順・型・チェックリストに変換する
+- 無料部分で問題提起、有料部分で実践素材を渡す
+
+${paidLine}
+
+## タイトル案
+1. ${words[0] || post.genre.name}で失敗しないための実践ロードマップ
+2. ${post.genre.name}を始める前に知っておきたい具体例と手順
+3. 初心者向け ${words.slice(0, 2).join("×") || post.genre.name} テンプレート集
+
+## 構成案
+
+### はじめに
+読者が抱えている悩みを1つに絞って書き出します。
+
+### なぜ今このテーマなのか
+スキが伸びている背景、読者が知りたい理由を説明します。
+
+### まず押さえるべき全体像
+専門用語を避けて、3ステップで整理します。
+
+### 実践手順
+1. 現状を確認する
+2. 小さく試す
+3. 結果を見て改善する
+4. テンプレート化する
+
+### 有料部分の想定内容
+（このnoteは有料記事です。タイトル・ジャンル・公開情報から推測しています）
+
+${imaginePaywallContent(post)}
+
+## 本文下書き
+
+「何から始めればいいかわからない」
+
+このテーマでつまずく人の多くは、知識が足りないというより、最初の順番がわからない状態です。
+
+だからこの記事では、難しい理論よりも、今日から使える手順に絞って整理します。
+
+まず見るべきなのは、完璧な正解ではありません。
+
+自分の状況に合わせて、小さく試せる型です。
+
+この記事では、その型を次の順番でまとめます。
+
+1. 全体像
+2. 具体例
+3. 実践テンプレート
+4. よくある失敗
+5. 改善チェックリスト
+
+無料部分では考え方を共有し、有料部分ではすぐ使える素材を渡す構成にします。
+
+${styleLine}
+`;
+
+      status.innerHTML = `<strong>選択note</strong>から作成案を生成しました。`;
+    }
+
+    async function copyArticleDraft() {
+      if (!articleOutput.value.trim()) {
+        status.innerHTML = `<span class="danger">先に記事案を生成してください。</span>`;
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(articleOutput.value);
+        status.innerHTML = `<strong>記事案</strong>をコピーしました。`;
+      } catch {
+        articleOutput.focus();
+        articleOutput.select();
+        status.innerHTML = `<strong>記事案</strong>を選択しました。`;
+      }
+    }
+
+    function addSinglePost() {
+      const title = document.querySelector("#singleTitle").value.trim();
+      const body = document.querySelector("#singleBody").value.trim();
+      const likes = document.querySelector("#singleLikes").value.trim();
+      const price = document.querySelector("#singlePrice").value.trim();
+
+      if (!title && !body) {
+        status.innerHTML = `<span class="danger">タイトルか本文を入れてください。</span>`;
+        return;
+      }
+
+      const line = [title || "無題", body, likes || 0, price || 0, ""].map(csvCell).join(",");
+      csvInput.value = csvInput.value.trim()
+        ? `${csvInput.value.trim()}\n${line}`
+        : `title,body,likes,price,url\n${line}`;
+
+      document.querySelector("#singleTitle").value = "";
+      document.querySelector("#singleBody").value = "";
+      document.querySelector("#singleLikes").value = "";
+      document.querySelector("#singlePrice").value = "";
+      analyze();
+    }
+
+    function loadSample() {
+      csvInput.value = `title,body,likes,price,url
+"ChatGPTで毎週3時間を浮かせる仕事術","議事録、メール、企画書をプロンプト化。テンプレ付き。",84,980,""
+"未経験からWebライター案件を取る営業文","副業ライター向け。提案文とポートフォリオの作り方。",63,500,""
+"マッチングアプリ初回メッセージ30例","恋愛、婚活、LINE移行までの例文集。",91,780,""
+"NISAを始める前の家計チェック","投資初心者向け。貯金、保険、税金の整理。",42,0,""
+"TOEIC700までの独学ロードマップ","英語学習、暗記、模試の回し方。",35,300,""
+"生成AIプロンプト集 営業資料編","AI活用で提案書とメールを自動化する実務テンプレ。",116,1480,""
+"職務経歴書の改善チェックリスト","転職で年収交渉まで進めるための見直し項目。",58,680,""
+"note販売で初月1万円を作る構成","コンテンツ販売、価格設計、無料記事から有料記事への導線。",104,980,""`;
+      analyze();
+    }
+
+    function analyzePriceRange(posts) {
+      const paid = posts.filter((p) => p.price > 0);
+      const ranges = [
+        { label: "〜299円", min: 1, max: 299 },
+        { label: "300〜499円", min: 300, max: 499 },
+        { label: "500〜999円", min: 500, max: 999 },
+        { label: "1000円以上", min: 1000, max: Infinity },
+      ];
+      return ranges.map((r) => {
+        const group = paid.filter((p) => p.price >= r.min && p.price <= r.max);
+        return {
+          label: r.label,
+          count: group.length,
+          avgLikes: group.length ? group.reduce((s, p) => s + p.likes, 0) / group.length : 0,
+        };
+      }).filter((r) => r.count > 0);
+    }
+
+    function analyzeTitlePatterns(posts) {
+      const patterns = [
+        { label: "チェックリスト系", re: /チェックリスト|チェック/ },
+        { label: "ロードマップ・手順系", re: /ロードマップ|手順|ステップ/ },
+        { label: "テンプレ・型系", re: /テンプレ|テンプレート|フォーマット/ },
+        { label: "実績・体験談系", re: /実績|万円|稼い|体験|やってみた/ },
+        { label: "初心者向け系", re: /初心者|入門|はじめて|ゼロから|未経験/ },
+        { label: "完全版・まとめ系", re: /完全版|まとめ|保存版|全部/ },
+        { label: "〇〇だけ・厳選系", re: /だけ|厳選|選び抜|ベスト/ },
+      ];
+      return patterns.map((p) => {
+        const group = posts.filter((post) => p.re.test(post.title));
+        return {
+          label: p.label,
+          count: group.length,
+          avgLikes: group.length ? group.reduce((s, post) => s + post.likes, 0) / group.length : 0,
+        };
+      }).filter((p) => p.count > 0).sort((a, b) => b.avgLikes - a.avgLikes);
+    }
+
+    function findNicheGenres(genreStats) {
+      return genreStats
+        .filter((g) => g.count >= 3 && g.count <= 50 && g.avgLikes >= 15 && g.name !== "その他")
+        .map((g) => ({ ...g, nicheScore: g.avgLikes / Math.log(g.count + 2) }))
+        .sort((a, b) => b.nicheScore - a.nicheScore)
+        .slice(0, 3);
+    }
+
+    function generateWeeklyReport() {
+      if (!latestPosts.length) {
+        status.innerHTML = `<span class="danger">先にデータを読み込んでください。</span>`;
+        return;
+      }
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+      const loadedCount = latestPosts.length;
+
+      // 24h購入確認済みnote（最強シグナル）
+      function hasBuySignal(p) {
+        return (p.soldSignal || "").includes("24h購入確認");
+      }
+      function disclosedCount(p) {
+        const m = (p.soldSignal || "").match(/購入([0-9,]+)件/);
+        return m ? Number(m[1].replace(/,/g, "")) : 0;
+      }
+      function breakthroughCount(p) {
+        const m = (p.soldSignal || "").match(/([0-9,万]+)件突破/);
+        return m ? m[1] : "";
+      }
+
+      const confirmedBought = latestPosts
+        .filter((p) => p.price > 0 && hasBuySignal(p))
+        .sort((a, b) => (b.price * 1.5 + b.likes) - (a.price * 1.5 + a.likes))
+        .slice(0, 8);
+
+      const selfDisclosed = latestPosts
+        .filter((p) => p.price > 0 && (disclosedCount(p) > 0 || breakthroughCount(p)))
+        .sort((a, b) => disclosedCount(b) - disclosedCount(a))
+        .slice(0, 5);
+
+      // ジャンル別・価格帯クロス分析
+      const paidPosts = latestPosts.filter((p) => p.price > 0);
+      const priceBands = [
+        { label: "〜299円", min: 1, max: 299 },
+        { label: "300〜499円", min: 300, max: 499 },
+        { label: "500〜999円", min: 500, max: 999 },
+        { label: "1,000〜1,999円", min: 1000, max: 1999 },
+        { label: "2,000円〜", min: 2000, max: Infinity },
+      ];
+
+      const topGenres = latestGenreStats
+        .filter((g) => g.name !== "その他" && g.count >= 3)
+        .map((g) => {
+          const gPaid = paidPosts.filter((p) => (p.genre?.name ?? p.genre) === g.name);
+          const bestBand = priceBands.map((b) => {
+            const posts = gPaid.filter((p) => p.price >= b.min && p.price <= b.max);
+            return { ...b, count: posts.length, avgLikes: posts.length ? posts.reduce((s, p) => s + p.likes, 0) / posts.length : 0 };
+          }).sort((a, b) => b.count - a.count)[0];
+          const buyCount = gPaid.filter(hasBuySignal).length;
+          const topNotes = gPaid
+            .sort((a, b) => {
+              const aScore = (a.hasBuySignal ? 300 : 0) + a.likes + (a.likeDelta * 2);
+              const bScore = (b.hasBuySignal ? 300 : 0) + b.likes + (b.likeDelta * 2);
+              return bScore - aScore;
+            })
+            .slice(0, 3);
+          // 総合スコア: 有料記事数が少ないジャンルはランクを下げる（最低5件）
+          const paidCount = gPaid.length;
+          const paidWeight = paidCount >= 20 ? 1.0 : paidCount >= 10 ? 0.8 : paidCount >= 5 ? 0.6 : 0.2;
+          const genreScore = (buyCount * 500 + g.salesScore) * paidWeight;
+          return { ...g, bestBand, buyCount, paidCount, topNotes, genreScore };
+        })
+        .sort((a, b) => b.genreScore - a.genreScore)
+        .slice(0, 5);
+
+      // タイトルの型パターン
+      const titlePatterns = analyzeTitlePatterns(latestPosts.filter((p) => p.price > 0)).slice(0, 5);
+
+      // 穴場ジャンル（TOP5に入っているジャンルは除外）
+      const topGenreNames = new Set(topGenres.map((g) => g.name));
+      const nicheGenres = findNicheGenres(latestGenreStats).filter((g) => !topGenreNames.has(g.name));
+
+      // 頻出キーワード
+      const topKeywords = latestKeywords.slice(0, 12).map(([w]) => w);
+
+      const totalPaid = paidPosts.length;
+      const buySignalCount = paidPosts.filter(hasBuySignal).length;
+
+      const report = `# ${dateStr}｜週間note売れる型レポート
+
+## このレポートについて
+
+noteには毎週、無数の有料記事が公開されます。
+
+でも正直に言います。**「爆売れ中」「100件突破」と書かれたnoteの多くは、実際に売れているかどうか確認する方法がありませんでした。**
+
+このレポートは、noteの公開情報をもとに「実際に今週買われているnote」を自動集計しています。スキ数や自己申告の件数ではなく、**複数の販売指標と価格帯・タイトルの型**を組み合わせて分析しています。
+
+> 売れているnoteには、売れる理由がある。その型を、データで明らかにします。
+
+有料note **${totalPaid}件** を分析${buySignalCount > 0 ? ` ／ 購入確認済み **${buySignalCount}件**` : ""}。
+${confirmedBought.length ? `
+---
+
+## ✅ 今週 購入が確認されたnote
+
+${confirmedBought.map((p, i) => {
+          const genre = p.genre?.name ?? p.genre ?? "";
+          const author = p.author ? ` ／ by ${String(p.author).replace(/[（(].*/,"").trim().slice(0, 15)}` : "";
+          return `**${i + 1}. ${p.title}**\n価格: ${p.price.toLocaleString("ja-JP")}円 ／ ジャンル: ${genre}${author}${p.url ? `\n→ ${p.url}` : ""}`;
+        }).join("\n\n")}` : ""}
+
+---
+
+## 🏆 ジャンル別・売れる価格帯 TOP5
+
+${topGenres.map((g, i) => `### ${["🥇","🥈","🥉","4️⃣","5️⃣"][i]} ${g.name}
+
+- 有料記事数: **${g.paidCount}件**
+- 週間スキ増加（平均）: **+${g.avgDelta.toFixed(1)}/週**（販売勢いの目安）
+- 最多価格帯: **${g.bestBand?.label || "不明"}**（${g.bestBand?.count || 0}件）
+- 販売予想（推計）: **${estimateSales(g)}**
+- ポイント: ${topReasons(g)}
+
+**注目note TOP3:**
+${g.topNotes.map((p, i) => {
+          const rawTitle = p.title || "";
+          // ハッシュタグ（#〜）と長すぎるタイトルをトリム
+          const trimTitle = rawTitle.replace(/\s*#[^\s#]+/g, "").trim();
+          const shortTitle = trimTitle.length > 50 ? trimTitle.slice(0, 50) + "…" : trimTitle;
+          const author = p.author ? ` by ${String(p.author).replace(/[（(].*/,"").trim().slice(0, 15)}` : "";
+          const profile = p.userProfile ? `（${p.userProfile}）` : "";
+          const notePoints = analyzeNotePoints(p);
+          const pointsText = `   💡 売れてる理由:\n` + notePoints.map((pt, pi) => `   ${pi + 1}. ${pt}`).join("\n");
+          const deltaStr = p.likeDelta > 0 ? `（週+${p.likeDelta}）` : "";
+          return `${i + 1}. **${shortTitle}**${p.price ? ` ／ ${p.price.toLocaleString("ja-JP")}円` : ""}${p.hasBuySignal ? " ✅" : ""} ／ スキ${p.likes}${deltaStr}${author ? ` ／${author}` : ""}${profile}${p.url ? `\n   → ${p.url}` : ""}\n${pointsText}`;
+        }).join("\n")}
+
+`).join("")}---
+
+## 📝 売れてるタイトルの型（有料記事限定）
+
+${titlePatterns.map((p) => `- **${p.label}**: ${p.count}件 ／ 平均スキ ${p.avgLikes.toFixed(1)}`).join("\n")}
+
+→ タイトルに「**${titlePatterns[0]?.label.replace("系","") || ""}**」の要素を入れると売れやすい傾向があります。
+
+---
+
+${selfDisclosed.length ? `## 📊 販売件数を公開しているnote
+
+${selfDisclosed.map((p, i) => `**${i + 1}. ${p.title}**
+${disclosedCount(p) ? `購入 **${disclosedCount(p)}件**` : `**${breakthroughCount(p)}件突破**`} ／ ${p.price.toLocaleString("ja-JP")}円 ／ ${p.genre}${p.url ? `
+→ ${p.url}` : ""}
+`).join("\n")}
+
+---
+
+` : ""}## 🔍 穴場ジャンル（競合少なめ・チャンスあり）
+
+${nicheGenres.length
+  ? nicheGenres.map((g, i) => `${i + 1}. **${g.name}** — 投稿${g.count}件。まだ混雑していないが有料記事の需要がある。`).join("\n")
+  : "今週は特筆すべき穴場ジャンルはありません。"}
+
+---
+
+## 🔑 今週の頻出キーワード
+
+${topKeywords.map((w) => `\`${w}\``).join("　")}
+
+---
+
+## まとめ
+
+${buySignalCount > 0
+  ? `今週は**${topGenres[0]?.name || ""}**で購入の動きが最も活発でした。`
+  : `今週の有料記事**${totalPaid}件**を分析しました。`}
+
+${(() => {
+        // TOP5の中で最も多いbestBandを集計
+        const bandCount = {};
+        topGenres.forEach((g) => { if (g.bestBand?.label) bandCount[g.bestBand.label] = (bandCount[g.bestBand.label] || 0) + 1; });
+        const topBand = Object.entries(bandCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+        return `注目ジャンルは**${topGenres[0]?.name || ""}**（有料${topGenres[0]?.paidCount || 0}件）と**${topGenres[1]?.name || ""}**（有料${topGenres[1]?.paidCount || 0}件）。TOP5で最も多い価格帯は**${topBand}**で、タイトルに「**${titlePatterns[0]?.label.replace("系","") || ""}**」を入れると反応が出やすい傾向があります。`;
+      })()}
+
+---
+
+## 🔔 次回予告
+
+このレポートは毎週更新します。
+
+「どのジャンルが伸びているか」「何円の記事が売れているか」「どんなタイトルが刺さるか」を、感覚ではなくデータで追い続けます。
+
+noteで売るための判断材料として、ぜひ活用してください。
+
+### フォローにつながる呼びかけ文
+
+投稿時は、次の中から記事の雰囲気に合うものを1つ使ってください。
+
+1. **次回の更新を受け取りたい方は、フォローしてお待ちください。来週も数字の変化を追います。**
+2. **いま知りたいジャンルや、分析してほしいテーマがあればコメントで教えてください。次回の調査候補にします。**
+3. **次回は「${topGenres[0]?.name || "注目ジャンル"}」で反応が伸びたタイトルの共通点を深掘りします。見逃したくない方はフォローをどうぞ。**
+
+---
+*本レポートはnoteの公開情報をもとに独自の手法で自動集計しています。販売数・売上の保証をするものではありません。*`;
+
+      const reportOutput = document.querySelector("#reportOutput");
+      reportOutput.value = report;
+
+      // タイトル案生成
+      const g1 = topGenres[0]?.name || "";
+      const g2 = topGenres[1]?.name || "";
+      const bp = topGenres[0]?.bestBand?.label || "";
+      const titles = [
+        `【${dateStr}】今週noteで実際に買われているジャンルTOP5`,
+        `${g1}が今週いちばん売れてる｜note売れる型レポート`,
+        `noteで売るなら「${g1}」×「${bp}」が今週の勝ちパターン`,
+        `${g1}・${g2}に購入シグナル集中｜週次note販売動向まとめ`,
+        `noteで売れるタイトルの型・価格帯を毎週データ分析（${dateStr}）`,
+      ].filter(Boolean);
+
+      const titleArea = document.getElementById("titleSuggestArea");
+      const titleList = document.getElementById("titleSuggestList");
+      titleList.innerHTML = titles.map((t) => `
+        <button class="title-suggest-btn" data-title="${escapeAttribute(t)}">${escapeHtml(t)}</button>
+      `).join("");
+      titleArea.style.display = "grid";
+
+      titleList.querySelectorAll(".title-suggest-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.title);
+          } catch {
+            const tmp = document.createElement("textarea");
+            tmp.value = btn.dataset.title;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand("copy");
+            document.body.removeChild(tmp);
+          }
+          btn.classList.add("copied");
+          btn.textContent = "✓ コピーしました";
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.textContent = btn.dataset.title;
+          }, 2000);
+        });
+      });
+
+      status.innerHTML = `<strong>週次レポート</strong>を生成しました。タイトル案をクリックでコピーできます。`;
+    }
+
+    async function copyReport() {
+      const reportOutput = document.querySelector("#reportOutput");
+      if (!reportOutput?.value.trim()) {
+        status.innerHTML = `<span class="danger">先にレポートを生成してください。</span>`;
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(reportOutput.value);
+        status.innerHTML = `<strong>レポート</strong>をコピーしました。`;
+      } catch {
+        reportOutput.focus();
+        reportOutput.select();
+        status.innerHTML = `<strong>レポート</strong>を選択しました。`;
+      }
+    }
+
+    function wrapText(ctx, text, maxWidth) {
+      const chars = [...text];
+      const lines = [];
+      let line = "";
+      for (const char of chars) {
+        if (ctx.measureText(line + char).width > maxWidth && line) {
+          lines.push(line);
+          line = char;
+        } else {
+          line += char;
+        }
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function extractTitleFromDraft(draft) {
+      const titleSection = draft.match(/## タイトル案[\s\S]*?1\. (.+)/);
+      if (titleSection) return titleSection[1].trim();
+      const h1 = draft.match(/^# (.+)$/m);
+      return h1 ? h1[1].trim() : "";
+    }
+
+    function generateAndShowCoverImage() {
+      const title = extractTitleFromDraft(articleOutput.value);
+      if (!title) {
+        status.innerHTML = `<span class="danger">先に記事案を生成してください。</span>`;
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 1280;
+      canvas.height = 670;
+      const ctx = canvas.getContext("2d");
+
+      const grad = ctx.createLinearGradient(0, 0, 1280, 670);
+      grad.addColorStop(0, "#007a62");
+      grad.addColorStop(1, "#004d3e");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 670);
+
+      ctx.fillStyle = "rgba(255,255,255,0.05)";
+      ctx.beginPath();
+      ctx.arc(1150, 110, 340, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(70, 590, 200, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      ctx.font = "500 28px 'Yu Gothic UI', Meiryo, sans-serif";
+      ctx.textBaseline = "top";
+      ctx.fillText("note", 100, 76);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 62px 'Yu Gothic UI', Meiryo, sans-serif";
+      ctx.textBaseline = "middle";
+      const lines = wrapText(ctx, title, 1060);
+      const lineHeight = 84;
+      const totalH = lines.length * lineHeight;
+      const startY = (670 - totalH) / 2 + 20;
+      lines.forEach((line, i) => {
+        ctx.fillText(line, 100, startY + i * lineHeight);
+      });
+
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillRect(100, startY + totalH + 28, 80, 3);
+
+      const dataUrl = canvas.toDataURL("image/png");
+      const coverArea = document.getElementById("coverImageArea");
+      const coverImg = document.getElementById("coverPreview");
+      const coverLink = document.getElementById("coverDownload");
+      coverImg.src = dataUrl;
+      coverLink.href = dataUrl;
+      coverLink.download = `note-cover-${Date.now()}.png`;
+      coverArea.style.display = "grid";
+      status.innerHTML = `<strong>カバー画像</strong>を生成しました。`;
+    }
+
+    const hasLocalBackend = ["127.0.0.1", "localhost"].includes(location.hostname);
+    if (!hasLocalBackend) {
+      document.querySelector("#refreshButton")?.remove();
+      document.querySelector("#commitHistoryButton")?.remove();
+      const cloudSchedule = document.querySelector("#cloudSchedule");
+      if (cloudSchedule) cloudSchedule.style.display = "inline";
+    }
+
+    document.querySelector("#analyzeButton")?.addEventListener("click", analyze);
+    document.querySelector("#sampleButton")?.addEventListener("click", loadSample);
+    document.querySelector("#collectButton")?.addEventListener("click", collectFromNote);
+    document.querySelector("#loadCollectedButton")?.addEventListener("click", loadCollectedCsv);
+    document.querySelector("#generateReportButton")?.addEventListener("click", generateWeeklyReport);
+    document.querySelector("#copyReportButton")?.addEventListener("click", copyReport);
+    document.querySelector("#clearReportButton")?.addEventListener("click", () => {
+      document.querySelector("#reportOutput").value = "";
+      document.querySelector("#titleSuggestArea").style.display = "none";
+      document.querySelector("#titleSuggestList").innerHTML = "";
+      status.innerHTML = "";
+    });
+    document.querySelector("#refreshButton")?.addEventListener("click", refreshLatestData);
+    document.querySelector("#commitHistoryButton")?.addEventListener("click", async () => {
+      if (!confirm("今週のデータをスキ増加ベースラインに設定します。\nレポート投稿後に押してください。よいですか？")) return;
+      const btn = document.querySelector("#commitHistoryButton");
+      btn.textContent = "更新中...";
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/commit-history", { method: "POST" });
+        const json = await res.json();
+        alert(json.message || "履歴を更新しました");
+      } catch {
+        alert("更新に失敗しました");
+      } finally {
+        btn.textContent = "📌 履歴を今週に更新";
+        btn.disabled = false;
+      }
+    });
+    document.querySelector("#clearButton")?.addEventListener("click", () => {
+      csvInput.value = "";
+      analyze();
+    });
+    document.querySelector("#addButton")?.addEventListener("click", addSinglePost);
+    document.querySelector("#sortMode")?.addEventListener("change", analyze);
+    document.querySelector("#minLikes")?.addEventListener("input", analyze);
+    document.querySelector("#noteKeyword")?.addEventListener("input", scheduleKeywordRefresh);
+    document.querySelector("#genreFilter")?.addEventListener("change", (event) => {
+      activeGenreFilter = event.target.value;
+      if (candidateGenreFilter) candidateGenreFilter.value = activeGenreFilter;
+      selectedPostKey = "";
+      analyze();
+    });
+    document.querySelector("#clearGenreFilter")?.addEventListener("click", () => {
+      activeGenreFilter = "";
+      if (genreFilter) genreFilter.value = "";
+      if (candidateGenreFilter) candidateGenreFilter.value = "";
+      selectedPostKey = "";
+      analyze();
+    });
+    postRows.addEventListener("click", (event) => {
+      const noteButton = event.target.closest(".exclude-note");
+      const authorButton = event.target.closest(".exclude-author");
+      if (!noteButton && !authorButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (noteButton) {
+        excludedKeys.add(noteButton.dataset.key);
+      }
+      if (authorButton) {
+        excludedAuthors.add(authorButton.dataset.author);
+      }
+
+      persistExclusions();
+      renderExclusionList();
+      selectedPostKey = "";
+      analyze();
+    });
+
+    document.getElementById("clearAllExclusions")?.addEventListener("click", () => {
+      excludedAuthors.clear();
+      excludedKeys.clear();
+      persistExclusions();
+      renderExclusionList();
+      analyze();
+    });
+
+    renderExclusionList();
+    loadCollectedCsv().catch(() => loadSample());
+  </script>
+</body>
+</html>
