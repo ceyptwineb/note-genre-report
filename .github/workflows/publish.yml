@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  schedule:
-    # Monday 07:00 JST (Sunday 22:00 UTC)
-    - cron: "0 22 * * 0"
 
 permissions:
   contents: write
@@ -22,30 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Collect this week's note data
-        if: github.event_name != 'push'
-        env:
-          NOTE_DAYS: 7
-          NOTE_SIZE: 400
-        run: node collect-note.mjs
-
-      - name: Save this week as the next comparison baseline
-        if: github.event_name != 'push'
-        shell: bash
-        run: |
-          cp note-collected.json note-history.json
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add note-collected.csv note-collected.json note-history.json note-top-genres.json note-top-genres.md
-          if ! git diff --cached --quiet; then
-            git commit -m "Update weekly note report [skip ci]"
-            git push
-          fi
 
       - name: Prepare public site
         shell: bash
