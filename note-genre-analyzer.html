@@ -1500,7 +1500,7 @@
           updateTimestamp(await jsonResponse.json());
         }
         analyze();
-        generateArticleDraft();
+        if (document.querySelector("#articleTheme")) generateArticleDraft();
         status.innerHTML = `<strong>最新レポート</strong>を読み込みました。`;
       } catch (error) {
         status.innerHTML = `<span class="danger">${escapeHtml(error.message)}</span>`;
