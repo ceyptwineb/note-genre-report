@@ -54,6 +54,8 @@ jobs:
           cp index.html note-genre-analyzer.html note-collected.csv note-collected.json note-top-genres.json note-top-genres.md .nojekyll public/
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
