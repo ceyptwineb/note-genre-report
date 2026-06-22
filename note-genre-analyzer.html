@@ -1434,7 +1434,7 @@
     async function collectFromNote() {
       const keyword = document.querySelector("#noteKeyword").value.trim();
       const sort = document.querySelector("#noteSort").value;
-      const size = Math.max(1, Math.min(400, Number(document.querySelector("#noteSize").value) || 400));
+      const size = Math.max(1, Math.min(10000, Number(document.querySelector("#noteSize")?.value) || 5000));
       const mode = document.querySelector("#collectMode").value;
 
       if (!keyword) {
@@ -1564,7 +1564,7 @@
     }
 
     function configuredCollectionSize() {
-      return Math.max(1, Math.min(400, Number(document.querySelector("#noteSize")?.value) || 400));
+      return Math.max(1, Math.min(10000, Number(document.querySelector("#noteSize")?.value) || 5000));
     }
 
     function collectionScopeText() {
